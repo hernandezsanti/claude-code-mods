@@ -1,5 +1,0 @@
-{
-  "name": "aviso-sesion",
-  "version": "0.1.0",
-  "description": "Suena cuando termina un turno largo (o cuando Claude te hace una pregunta), para trabajar con varias sesiones en paralelo."
-}
