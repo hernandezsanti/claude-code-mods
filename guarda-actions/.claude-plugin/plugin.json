@@ -1,0 +1,5 @@
+{
+  "name": "guarda-actions",
+  "version": "0.1.0",
+  "description": "Cuida los minutos de GitHub Actions: bloquea gh run watch/rerun y el polling de CI, y avisa al abrir un segundo PR en la sesión."
+}

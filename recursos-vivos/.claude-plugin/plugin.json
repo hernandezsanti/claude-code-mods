@@ -1,0 +1,5 @@
+{
+  "name": "recursos-vivos",
+  "version": "0.2.0",
+  "description": "Avisa (línea de estado y toast) solo cuando falta RAM o disco: RAM libre, disco libre y test runners corriendo. Sin problema, no dibuja nada."
+}

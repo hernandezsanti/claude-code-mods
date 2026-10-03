@@ -1,0 +1,5 @@
+{
+  "name": "commit-ticket",
+  "version": "0.1.0",
+  "description": "Bloquea commits sin [TICKET] cuando la rama lleva ticket, y los commits solo de linting o formato; sugiere el mensaje correcto."
+}
