@@ -3,21 +3,71 @@ export const OVERRIDE = '# ok-commit'
 
 export const IS_COMMIT = /\bgit\s+(?:-[Cc]\s+\S+\s+)*commit\b/
 
-const HEREDOC = /<<-?\s*\\?['"]?(\w+)['"]?[^\n]*\n\s*([^\n]+)/
+const HEREDOC_START = /<<-?\s*\\?['"]?(\w+)['"]?/
 const INLINE = /\s(?:-[a-zA-Z]*m|--message)[ =]\s*(?:"([^"]*)"|'([^']*)')/
+// Caracteres que cierran el segmento del `git commit` en un comando compuesto
+// (`&&`, `||`, `;`, `|`, `&` y salto de línea).
+const SEGMENT_END = ';&|\n'
+
+// Separa los cuerpos de los heredocs del resto del comando. Sin esto, un
+// `cat >> plan.md <<'EOF'` o un `python3 - <<'EOF'` que mencionan `git commit`
+// en su texto se leían como el commit, y su primera línea como el mensaje.
+function splitHeredocs(command: string): { outside: string; bodies: string[] } {
+  const lines = command.split('\n')
+  const outside: string[] = []
+  const bodies: string[] = []
+  for (let i = 0; i < lines.length; i++) {
+    outside.push(lines[i])
+    const start = HEREDOC_START.exec(lines[i])
+    if (!start) continue
+    const body: string[] = []
+    for (i++; i < lines.length && lines[i].trim() !== start[1]; i++) body.push(lines[i])
+    bodies.push(body.join('\n'))
+    outside.push(`<<HEREDOC_${bodies.length - 1}`)
+  }
+  return { outside: outside.join('\n'), bodies }
+}
 
 // Primera línea del mensaje de un `git commit`, o null cuando no se puede leer
 // con seguridad (`-F`, `--amend --no-edit`, `$(git log ...)`, variables).
 export function extractMessage(command: string): string | null {
-  if (!IS_COMMIT.test(command)) return null
+  const { outside, bodies } = splitHeredocs(command)
+  const commit = IS_COMMIT.exec(outside)
+  if (!commit) return null
 
-  const heredoc = HEREDOC.exec(command)
-  const inline = INLINE.exec(command)
-  // `-m "$(cat <<'EOF'` también calza INLINE, pero ahí manda el heredoc.
-  const raw = (heredoc ? heredoc[2] : (inline?.[1] ?? inline?.[2]))?.trim()
+  // Solo cuenta lo que va desde `git commit` hasta el fin de su segmento,
+  // más un heredoc que arranque ahí (`-F - <<EOF` o `-m "$(cat <<EOF`).
+  const rest = outside.slice(commit.index + commit[0].length)
+  const heredocRef = /^[^\n]*?<<-?\s*\\?['"]?\w+['"]?[^\n]*\n<<HEREDOC_(\d+)/.exec(rest)
+  if (heredocRef) {
+    const first = bodies[Number(heredocRef[1])].split('\n').find((l) => l.trim() !== '')
+    return clean(first)
+  }
 
-  if (!raw || raw.includes('$(') || raw.startsWith('$')) return null
-  return raw
+  const inline = INLINE.exec(firstSegment(rest))
+  return clean(inline?.[1] ?? inline?.[2])
+}
+
+// Corta en el primer `&&`, `||`, `;`, `|` o salto de línea fuera de comillas.
+function firstSegment(text: string): string {
+  let quote: string | null = null
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]
+    if (quote) {
+      if (c === quote) quote = null
+    } else if (c === '"' || c === "'") {
+      quote = c
+    } else if (SEGMENT_END.includes(c)) {
+      return text.slice(0, i)
+    }
+  }
+  return text
+}
+
+function clean(raw: string | undefined): string | null {
+  const message = raw?.trim()
+  if (!message || message.includes('$(') || message.startsWith('$')) return null
+  return message
 }
 
 // Ticket de una rama como `feature/ABC-5-algo`, `fix/XYZ-981-x` o `ABC-6-editor`.

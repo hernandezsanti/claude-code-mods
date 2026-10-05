@@ -49,6 +49,30 @@ test('bloquea commits solo de linting o formato', () => {
   expect(checkCommit('git commit -m "[ABC-5] Agregar validación de formato de fecha"', 'feature/ABC-5-algo')).toBe(null)
 })
 
+test('ignora heredocs que no son del commit (casos reales)', () => {
+  const branch = 'feature/DOC-2-plan-de-trabajo'
+  // Un plan con pasos "git commit" adentro, escrito con cat y sin commit real.
+  const plan = "cat >> docs/plan.md <<'EOF'\n### Task 3: Snapshot\n- [ ] git commit -m \"wip\"\nEOF"
+  expect(extractMessage(plan)).toBe(null)
+  // Un heredoc previo y después el commit real con su -m.
+  const both = `cat > a.md <<'EOF'\n### Task 3\nEOF\ngit add a.md && git commit -m "[DOC-2] agrega el plan"`
+  expect(extractMessage(both)).toBe('[DOC-2] agrega el plan')
+  expect(checkCommit(both, branch)).toBe(null)
+  // Un script de python que menciona git commit en su texto.
+  const py = "python3 - <<'EOF'\np='README.md'; s=open(p).read()\n# luego git commit\nEOF"
+  expect(checkCommit(py, branch)).toBe(null)
+})
+
+test('lee el heredoc del commit aunque haya otro antes', () => {
+  const cmd = `cat > x <<'A'\nhola\nA\ngit commit -F - <<'EOF'\n[XYZ-990] Actualiza dependencias\n\ncuerpo\nEOF`
+  expect(extractMessage(cmd)).toBe('[XYZ-990] Actualiza dependencias')
+})
+
+test('el -m con ; o | adentro de las comillas no corta el mensaje', () => {
+  expect(extractMessage('git commit -m "Fix a; b | c" && git push')).toBe('Fix a; b | c')
+  expect(extractMessage('git commit -q && echo -m "no es el mensaje"')).toBe(null)
+})
+
 test('el comentario ok-commit es la salida de emergencia', () => {
   expect(checkCommit(`git commit -m "WIP" ${OVERRIDE}`, 'feature/ABC-5-algo')).toBe(null)
 })
