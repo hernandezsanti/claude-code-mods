@@ -1,7 +1,7 @@
 const GB = 1024 ** 3
 
-// Memoria "disponible" a la macOS: libre + inactiva + especulativa + purgable.
-// `vm_stat` informa páginas, y el tamaño de página va en su primera línea.
+// "Available" memory the macOS way: free + inactive + speculative + purgeable.
+// `vm_stat` reports pages, and the page size is on its first line.
 export function parseVmStat(text: string): number | null {
   const pageSize = Number(/page size of (\d+) bytes/.exec(text)?.[1])
   if (!pageSize) return null
@@ -18,7 +18,7 @@ export function parseVmStat(text: string): number | null {
   return available * pageSize
 }
 
-// `df -k /`: la columna 4 de la segunda línea es lo disponible, en KB.
+// `df -k /`: column 4 of the second line is the available space, in KB.
 export function parseDfAvailable(text: string): number | null {
   const row = text.trim().split('\n')[1]?.trim().split(/\s+/)
   const kb = Number(row?.[3])
@@ -28,8 +28,8 @@ export function parseDfAvailable(text: string): number | null {
 const RUNNER =
   /\b(jest|vitest|rspec|parallel_rspec|playwright test|tsx --test|node --test|bun test|pytest)\b/
 
-// Procesos de test en `ps -axo command`, sin contar al propio `ps` ni a los
-// `grep` que alguien haya lanzado para buscarlos.
+// Test processes in `ps -axo command`, without counting `ps` itself or the
+// `grep` commands that someone started to look for them.
 export function countRunners(psText: string): number {
   return psText
     .split('\n')
@@ -57,5 +57,5 @@ export function formatStatus(
 ): string {
   const mark = { ok: '', warn: '! ', critical: '!! ' }[levelOf(ramBytes, diskBytes)]
   const tests = runners > 0 ? ` · tests ${runners}` : ''
-  return `${mark}RAM ${gb(ramBytes)} libre · disco ${gb(diskBytes)}${tests}`
+  return `${mark}RAM ${gb(ramBytes)} free · disk ${gb(diskBytes)}${tests}`
 }

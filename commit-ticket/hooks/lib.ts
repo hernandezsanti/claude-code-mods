@@ -1,17 +1,17 @@
-// Escape explícito: un comando con este comentario pasa sin revisión.
+// Explicit escape hatch: a command with this comment passes without a check.
 export const OVERRIDE = '# ok-commit'
 
 export const IS_COMMIT = /\bgit\s+(?:-[Cc]\s+\S+\s+)*commit\b/
 
 const HEREDOC_START = /<<-?\s*\\?['"]?(\w+)['"]?/
 const INLINE = /\s(?:-[a-zA-Z]*m|--message)[ =]\s*(?:"([^"]*)"|'([^']*)')/
-// Caracteres que cierran el segmento del `git commit` en un comando compuesto
-// (`&&`, `||`, `;`, `|`, `&` y salto de línea).
+// Characters that end the `git commit` segment in a compound command
+// (`&&`, `||`, `;`, `|`, `&` and newline).
 const SEGMENT_END = ';&|\n'
 
-// Separa los cuerpos de los heredocs del resto del comando. Sin esto, un
-// `cat >> plan.md <<'EOF'` o un `python3 - <<'EOF'` que mencionan `git commit`
-// en su texto se leían como el commit, y su primera línea como el mensaje.
+// Separates the heredoc bodies from the rest of the command. Without this, a
+// `cat >> plan.md <<'EOF'` or a `python3 - <<'EOF'` that mention `git commit`
+// in their text were read as the commit, and their first line as the message.
 function splitHeredocs(command: string): { outside: string; bodies: string[] } {
   const lines = command.split('\n')
   const outside: string[] = []
@@ -28,15 +28,15 @@ function splitHeredocs(command: string): { outside: string; bodies: string[] } {
   return { outside: outside.join('\n'), bodies }
 }
 
-// Primera línea del mensaje de un `git commit`, o null cuando no se puede leer
-// con seguridad (`-F`, `--amend --no-edit`, `$(git log ...)`, variables).
+// First line of the message of a `git commit`, or null when it cannot be read
+// with confidence (`-F`, `--amend --no-edit`, `$(git log ...)`, variables).
 export function extractMessage(command: string): string | null {
   const { outside, bodies } = splitHeredocs(command)
   const commit = IS_COMMIT.exec(outside)
   if (!commit) return null
 
-  // Solo cuenta lo que va desde `git commit` hasta el fin de su segmento,
-  // más un heredoc que arranque ahí (`-F - <<EOF` o `-m "$(cat <<EOF`).
+  // Only what goes from `git commit` to the end of its segment counts,
+  // plus a heredoc that starts there (`-F - <<EOF` or `-m "$(cat <<EOF`).
   const rest = outside.slice(commit.index + commit[0].length)
   const heredocRef = /^[^\n]*?<<-?\s*\\?['"]?\w+['"]?[^\n]*\n<<HEREDOC_(\d+)/.exec(rest)
   if (heredocRef) {
@@ -48,7 +48,7 @@ export function extractMessage(command: string): string | null {
   return clean(inline?.[1] ?? inline?.[2])
 }
 
-// Corta en el primer `&&`, `||`, `;`, `|` o salto de línea fuera de comillas.
+// Cuts at the first `&&`, `||`, `;`, `|` or newline outside quotes.
 function firstSegment(text: string): string {
   let quote: string | null = null
   for (let i = 0; i < text.length; i++) {
@@ -70,16 +70,17 @@ function clean(raw: string | undefined): string | null {
   return message
 }
 
-// Ticket de una rama como `feature/ABC-5-algo`, `fix/XYZ-981-x` o `ABC-6-editor`.
+// Ticket of a branch like `feature/ABC-5-something`, `fix/XYZ-981-x` or `ABC-6-editor`.
 export function ticketOf(branch: string): string | null {
   return /(?:^|\/)([A-Z][A-Z0-9]*-\d+)(?:-|$)/.exec(branch)?.[1] ?? null
 }
 
 const HAS_TICKET = /^\[[A-Z][A-Z0-9]*-\d+\] \S/
+// Recognizes English and Spanish verbs and nouns.
 const LINT_ONLY =
   /^\[[A-Z][A-Z0-9]*-\d+\]\s+(corregir|aplicar|arreglar|fix|apply|run)\s+(el\s+|los\s+|the\s+)?(linting|lint|formato|format|prettier|eslint)\b/i
 
-// Devuelve el motivo del bloqueo, o null si el commit está bien.
+// Returns the reason to block, or null if the commit is fine.
 export function checkCommit(command: string, branch: string): string | null {
   if (command.includes(OVERRIDE)) return null
 
@@ -90,15 +91,15 @@ export function checkCommit(command: string, branch: string): string | null {
 
   if (ticket !== null && !HAS_TICKET.test(message)) {
     return (
-      `commit-ticket: la rama ${branch} lleva el ticket ${ticket}, así que el mensaje debe ser ` +
-      `"[TICKET] descripción". Usa: [${ticket}] ${message}`
+      `commit-ticket: the branch ${branch} has the ticket ${ticket}, so the message must be ` +
+      `"[TICKET] description". Use: [${ticket}] ${message}`
     )
   }
 
   if (LINT_ONLY.test(message)) {
     return (
-      'commit-ticket: nada de commits solo de linting o formato. Corre el autofix (eslint --fix, prettier --write) ' +
-      'y deja el resultado dentro del commit del cambio que lo provocó (git commit --amend o un fixup).'
+      'commit-ticket: no commits that only fix linting or formatting. Run the autofix (eslint --fix, prettier --write) ' +
+      'and keep the result inside the commit of the change that caused it (git commit --amend or a fixup).'
     )
   }
 

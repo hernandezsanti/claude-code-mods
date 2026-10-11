@@ -1,5 +1,8 @@
 {
   "name": "commit-ticket",
   "version": "0.1.0",
-  "description": "Bloquea commits sin [TICKET] cuando la rama lleva ticket, y los commits solo de linting o formato; sugiere el mensaje correcto."
+  "description": "Blocks commits without [TICKET] when the branch has a ticket, and commits that only fix linting or formatting; suggests the correct message.",
+  "author": {
+    "name": "Santiago Hernández"
+  }
 }

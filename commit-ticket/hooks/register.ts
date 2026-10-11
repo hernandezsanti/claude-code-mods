@@ -2,7 +2,7 @@ import type { Register } from 'claude-code'
 
 import { checkCommit, extractMessage } from './lib'
 
-// Directorio donde corre el comando: el primer `cd X` o el `git -C X`.
+// Directory where the command runs: the first `cd X` or the `git -C X`.
 function commandDir(command: string, home: string): string | null {
   const raw =
     /^\s*cd\s+("[^"]+"|'[^']+'|[^\s&;]+)/m.exec(command)?.[1] ??
@@ -31,7 +31,7 @@ export const register: Register = on => {
         return { deny: reason }
       }
     } catch {
-      // Si no se pudo leer la rama, mejor dejar pasar el commit que trabarlo.
+      // If the branch could not be read, it is better to let the commit pass than to block it.
     }
 
     return next(e)

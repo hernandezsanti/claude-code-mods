@@ -10,21 +10,21 @@ Pages speculative:                         5000.
 Pages purgeable:                           1000.
 `
 
-test('parseVmStat suma libre, inactiva, especulativa y purgable', () => {
+test('parseVmStat adds free, inactive, speculative and purgeable pages', () => {
   expect(parseVmStat(VM)).toBe((10000 + 50000 + 5000 + 1000) * 16384)
 })
 
-test('parseVmStat devuelve null si no hay tamaño de página', () => {
-  expect(parseVmStat('nada')).toBe(null)
+test('parseVmStat returns null when there is no page size', () => {
+  expect(parseVmStat('nothing')).toBe(null)
 })
 
-test('parseDfAvailable lee la columna disponible en bytes', () => {
+test('parseDfAvailable reads the available column in bytes', () => {
   const df = `Device       1024-blocks      Used Available Capacity iused ifree %iused  Mounted on
 /dev/disk3s1s1   494384795  12000000  20971520    37%  400000 4000 9%   /`
   expect(parseDfAvailable(df)).toBe(20971520 * 1024)
 })
 
-test('countRunners cuenta runners y no cuenta grep ni ps', () => {
+test('countRunners counts runners and does not count grep or ps', () => {
   const ps = [
     'node /x/node_modules/.bin/jest --maxWorkers=2',
     'node /x/jest-worker/processChild.js',
@@ -36,7 +36,7 @@ test('countRunners cuenta runners y no cuenta grep ni ps', () => {
   expect(countRunners(ps)).toBe(3)
 })
 
-test('levelOf distingue ok, warn y critical', () => {
+test('levelOf tells ok, warn and critical apart', () => {
   const G = 1024 ** 3
   expect(levelOf(8 * G, 100 * G)).toBe('ok')
   expect(levelOf(2 * G, 100 * G)).toBe('warn')
@@ -46,8 +46,8 @@ test('levelOf distingue ok, warn y critical', () => {
   expect(levelOf(8 * G, 3 * G)).toBe('critical')
 })
 
-test('formatStatus marca el nivel y muestra los tests solo si hay', () => {
+test('formatStatus marks the level and shows the tests only when there are some', () => {
   const G = 1024 ** 3
-  expect(formatStatus(8 * G, 100 * G, 0)).toBe('RAM 8.0G libre · disco 100.0G')
-  expect(formatStatus(0.5 * G, 100 * G, 2)).toBe('!! RAM 0.5G libre · disco 100.0G · tests 2')
+  expect(formatStatus(8 * G, 100 * G, 0)).toBe('RAM 8.0G free · disk 100.0G')
+  expect(formatStatus(0.5 * G, 100 * G, 2)).toBe('!! RAM 0.5G free · disk 100.0G · tests 2')
 })

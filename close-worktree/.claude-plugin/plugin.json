@@ -1,0 +1,8 @@
+{
+  "name": "close-worktree",
+  "version": "0.1.0",
+  "description": "After a PR is opened from a git worktree, tells Claude if the worktree can be closed (clean and pushed) or what is still not saved.",
+  "author": {
+    "name": "Santiago Hernández"
+  }
+}

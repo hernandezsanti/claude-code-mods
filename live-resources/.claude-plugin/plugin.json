@@ -1,0 +1,8 @@
+{
+  "name": "live-resources",
+  "version": "0.2.0",
+  "description": "Warns (status line and toast) only when RAM or disk is low: free RAM, free disk and running test runners. When there is no problem, it draws nothing.",
+  "author": {
+    "name": "Santiago Hernández"
+  }
+}

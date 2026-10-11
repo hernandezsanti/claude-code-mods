@@ -1,5 +1,0 @@
-{
-  "name": "cierra-worktree",
-  "version": "0.1.0",
-  "description": "Tras abrir un PR desde un worktree, avisa a Claude si ya se puede cerrar (limpio y pusheado) o si todavía quedan cosas sin guardar."
-}

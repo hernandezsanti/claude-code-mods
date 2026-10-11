@@ -6,7 +6,7 @@ import type { Probe } from './lib'
 async function probe($: EngineInterface, cwd: string): Promise<Probe | null> {
   const run = (argv: string[]) => $.process.run(argv, { cwd, timeoutMs: 10_000 })
 
-  // Rutas absolutas: en un subdirectorio git-dir sale absoluto y git-common-dir relativo.
+  // Absolute paths: in a subdirectory, git-dir is absolute but git-common-dir is relative.
   const layout = await run([
     'git',
     'rev-parse',
@@ -44,11 +44,11 @@ export const register: Register = on => {
       const message = found && advice(found)
 
       if (message) {
-        $.ui.toast('PR abierto desde un worktree: revisa si ya se puede cerrar', { timeoutMs: 8_000 })
+        $.ui.toast('PR opened from a worktree: check if it can be closed now', { timeoutMs: 8_000 })
         return { ...ran, context: [...(ran.context ?? []), message] }
       }
     } catch {
-      // Si no se pudo mirar el worktree, el PR ya está abierto: no estorbar.
+      // If the worktree could not be checked, the PR is already open: do not get in the way.
     }
 
     return ran

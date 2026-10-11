@@ -18,7 +18,7 @@ export const register: Register = on => {
       prsCreated += 1
       if (prsCreated >= 2) {
         $.ui.toast(
-          `Ya abriste ${prsCreated} PRs en esta sesión: cada uno corre el CI. Mejor un PR de integración.`,
+          `You opened ${prsCreated} PRs in this session: each one runs CI. One integration PR is better.`,
           { timeoutMs: 10_000 },
         )
       }

@@ -24,20 +24,20 @@ export const register: Register = on => {
 
           const level = levelOf(ram, disk)
 
-          // La línea de estado solo aparece cuando hay un problema: el motor la
-          // dibuja como aviso, y fija todo el tiempo sería ruido.
+          // The status line only shows up when there is a problem: the engine
+          // draws it as a warning, and showing it all the time would be noise.
           $.ui.status(level === 'ok' ? undefined : formatStatus(ram, disk, countRunners(ps.stdout)))
 
           if (level !== 'ok' && level !== lastLevel) {
             $.ui.toast(
               level === 'critical'
-                ? 'Memoria o disco casi agotados: no lances más tests en paralelo'
-                : 'Poca memoria o disco: cuidado con los tests en paralelo',
+                ? 'Memory or disk almost full: do not start more tests in parallel'
+                : 'Low memory or disk: be careful with tests in parallel',
             )
           }
           lastLevel = level
         } catch {
-          // Un tick fallido no debe tumbar la sesión; el siguiente reintenta.
+          // A failed tick must not break the session; the next one tries again.
         }
       }
 

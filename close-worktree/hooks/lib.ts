@@ -1,7 +1,7 @@
 export const PR_CREATE = /\bgh\s+pr\s+create\b/
 
-// Directorio donde corre el comando: el primer `cd X` o el `git -C X`.
-// Si no hay ninguno, el del propio comando es el de la sesión.
+// Directory where the command runs: the first `cd X` or the `git -C X`.
+// If there is none, the command runs in the session directory.
 export function commandDir(command: string, home: string): string | null {
   const raw =
     /^\s*cd\s+("[^"]+"|'[^']+'|[^\s&;]+)/m.exec(command)?.[1] ??
@@ -19,7 +19,7 @@ export type Probe = {
   unpushed: number | null
 }
 
-// Salida de `git rev-parse --git-dir --git-common-dir --show-toplevel`.
+// Output of `git rev-parse --git-dir --git-common-dir --show-toplevel`.
 export function parseLayout(revParse: string): { isWorktree: boolean; root: string; mainRepo: string } {
   const [gitDir = '', common = '', root = ''] = revParse.trim().split('\n').map(s => s.trim())
   const absolute = (p: string): string => (p.startsWith('/') ? p : `${root}/${p}`)
@@ -31,20 +31,20 @@ export function advice(probe: Probe): string | null {
   if (!probe.isWorktree) return null
 
   const pending: string[] = []
-  if (probe.dirtyFiles > 0) pending.push(`${probe.dirtyFiles} archivos sin commitear`)
-  if (probe.unpushed === null) pending.push('commits sin pushear (la rama no tiene upstream)')
-  else if (probe.unpushed > 0) pending.push(`${probe.unpushed} commits sin pushear`)
+  if (probe.dirtyFiles > 0) pending.push(`${probe.dirtyFiles} uncommitted files`)
+  if (probe.unpushed === null) pending.push('unpushed commits (the branch has no upstream)')
+  else if (probe.unpushed > 0) pending.push(`${probe.unpushed} unpushed commits`)
 
   if (pending.length > 0) {
     return (
-      `cierra-worktree: el PR se abrió desde el worktree ${probe.root}, pero todavía tiene ${pending.join(' y ')}. ` +
-      'No lo cierres: resuélvelo primero y avisa al usuario.'
+      `close-worktree: the PR was opened from the worktree ${probe.root}, but it still has ${pending.join(' and ')}. ` +
+      'Do not remove it: fix that first and tell the user.'
     )
   }
 
   return (
-    `cierra-worktree: el PR se abrió desde el worktree ${probe.root} y está limpio y pusheado. ` +
-    `Ciérralo ahora con \`git -C ${probe.mainRepo} worktree remove ${probe.root}\` ` +
-    '(la rama local y la remota quedan; si llegan correcciones de review se recrea con `git worktree add`).'
+    `close-worktree: the PR was opened from the worktree ${probe.root} and it is clean and pushed. ` +
+    `Remove it now with \`git -C ${probe.mainRepo} worktree remove ${probe.root}\` ` +
+    '(the local and remote branches stay; if the review asks for changes, create it again with `git worktree add`).'
   )
 }
